@@ -58,7 +58,7 @@ Unknown contract interactions (+5 each)
 
 ## 📁 Project Structure
 
-text
+```text  
 rsk-wallet-risk-scan/
 ├── app/                          
 │   ├── layout.tsx
@@ -98,7 +98,7 @@ rsk-wallet-risk-scan/
 ├── tailwind.config.js
 ├── package.json
 └── README.md     
-          
+  ```        
             
 ## 🚀 Quick Start
 
