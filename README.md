@@ -19,26 +19,26 @@ A comprehensive blockchain security analysis tool for the Rootstock (RSK) networ
 
 RSK Wallet Risk Scan is a production-ready security analysis tool for the Rootstock blockchain. It allows users to:
 
-1. **Connect their wallet** (MetaMask, WalletConnect) or **paste any RSK address**.
-2. **Fetch on-chain data** via RPC and the Rootstock Explorer API.
-3. **Analyze** token approvals, contract interactions, and transaction patterns.
-4. **Generate a risk report** with a score (LOW/MEDIUM/HIGH) and detailed tables.
+1. *Connect their wallet* (MetaMask, WalletConnect) or *paste any RSK address*.
+2. *Fetch on-chain data* via RPC and the Rootstock Explorer API.
+3. *Analyze* token approvals, contract interactions, and transaction patterns.
+4. *Generate a risk report* with a score (LOW/MEDIUM/HIGH) and detailed tables.
 
 The tool is built with Next.js (App Router), TypeScript, Tailwind CSS, shadcn/ui, RainbowKit, wagmi, and ethers.js, following clean architecture and production best practices.
 
  ## ✨ Features
 
-- **Wallet Connection:** Connect via MetaMask or WalletConnect (RainbowKit integration).
+- *Wallet Connection:* Connect via MetaMask or WalletConnect (RainbowKit integration).
 
-- **Manual Address Input:** Paste any RSK address with validation.
+- *Manual Address Input:* Paste any RSK address with validation.
 
-- **Transaction Analysis:** Fetch transaction count, list, and contract interactions.
+- *Transaction Analysis:* Fetch transaction count, list, and contract interactions.
 
-- **Token Approval Detection:** Detect ERC20 approve() calls, flag unlimited or high allowances.
+- *Token Approval Detection:* Detect ERC20 approve() calls, flag unlimited or high allowances.
 
-- **Contract Interaction Analysis:** Identify unknown contracts and interaction frequency.
+- *Contract Interaction Analysis:* Identify unknown contracts and interaction frequency.
 
-- **Risk Scoring Engine:** Calculate a risk score based on multiple factors:**
+- *Risk Scoring Engine:* Calculate a risk score based on multiple factors:**
 
 Unlimited approvals (+40 each)
 
@@ -50,27 +50,27 @@ Unknown contract interactions (+5 each)
 
 50 transactions (+10)
 
-- **Dashboard UI:** Summary cards, tables for approvals and interactions, risk badge.
+- *Dashboard UI:* Summary cards, tables for approvals and interactions, risk badge.
 
-- **Modern Design:** Tailwind CSS + shadcn/ui with Rootstock's orange and black theme.
+- *Modern Design:* Tailwind CSS + shadcn/ui with Rootstock's orange and black theme.
 
-- **Responsive:** Works on mobile and desktop.
+- *Responsive:* Works on mobile and desktop.
 
 ## 📁 Project Structure
 
-```text
+text
 rsk-wallet-risk-scan/
-├── app/                          # Next.js App Router
+├── app/                          
 │   ├── layout.tsx
 │   ├── page.tsx
-│   ├── about/                     # About page
-│   ├── faq/                        # FAQ page
-│   ├── docs/                       # Documentation page
-│   ├── contact/                    # Contact page
+│   ├── about/                     
+│   ├── faq/                       
+│   ├── docs/                       
+│   ├── contact/                    
 │   ├── api/scan/                   # API route for scanning
 │   │   └── route.ts
 │   └── providers.tsx               # RainbowKit/Wagmi providers
-├── components/                     # React components
+├── components/                     
 │   ├── Navbar.tsx
 │   ├── Footer.tsx
 │   ├── WalletInput.tsx
@@ -79,17 +79,17 @@ rsk-wallet-risk-scan/
 │   ├── RiskScoreCard.tsx
 │   ├── ApprovalTable.tsx
 │   ├── InteractionTable.tsx
-│   └── ui/                          # shadcn/ui components
-├── lib/                             # Utility libraries
+│   └── ui/                         
+├── lib/                             
 │   ├── rpc.ts                        # ethers provider
 │   ├── riskEngine.ts                  # Risk scoring logic
 │   ├── wagmiConfig.ts                 # RainbowKit/Wagmi config
 │   └── utils.ts                       # Helper functions
-├── services/                         # Service layer
+├── services/                         
 │   └── walletService.ts                # API client
-├── types/                            # TypeScript types
+├── types/                            
 │   └── wallet.ts
-├── utils/                            # Utility functions
+├── utils/                            
 │   └── addressValidator.ts
 ├── styles/                           # Global CSS
 │   └── globals.css
@@ -98,55 +98,55 @@ rsk-wallet-risk-scan/
 ├── tailwind.config.js
 ├── package.json
 └── README.md     
-```          
+          
             
 ## 🚀 Quick Start
 
-Prerequisites
+### Prerequisites
 
-Node.js 18+
+- Node.js 18+
 
-npm or yarn
+- npm or yarn
 
-MetaMask browser extension (optional for wallet connection)
+- MetaMask browser extension (optional for wallet connection)
 
-A WalletConnect Project ID (get from WalletConnect Cloud)
+- A WalletConnect Project ID (get from WalletConnect Cloud)
 
 ## Installation
 
-**Clone the repository**
+*Clone the repository*
 
-```bash
+bash
 git clone https://github.com/your-username/rsk-wallet-risk-scan.git
 cd rsk-wallet-risk-scan
-```
+
 
 ## Install dependencies
 
-```bash
+bash
 npm install
-```
 
-**Set up environment variables** 
+
+*Set up environment variables* 
 
 Copy .env.example to .env.local and fill in your values:
 
-```bash
+bash
 cp .env.example .env.local
-```
 
-**Edit .env.local:**
 
-```text
+*Edit .env.local:*
+
+text
 NEXT_PUBLIC_RSK_RPC=https://public-node.rsk.co
 NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_project_id_here
 NEXT_PUBLIC_EXPLORER_API=https://explorer.rsk.co/api
-```
-**Run the development server**
 
-```bash
+*Run the development server*
+
+bash
 npm run dev
-```
+
 
 Open http://localhost:3000 in your browser.
 
@@ -201,9 +201,9 @@ Returns a risk report for the given address.
 
 address (required): A valid 0x-prefixed RSK address.
 
-**Response**
+*Response*
 
-```json
+json
 {
   "riskLevel": "LOW" | "MEDIUM" | "HIGH",
   "score": number,
@@ -225,21 +225,21 @@ address (required): A valid 0x-prefixed RSK address.
     }
   ]
 }
-```
+
 ### Example
 
-```bash
-curl "http://localhost:3000/api/scan?address=0xAddress"
-```
+bash
+curl "http://localhost:3000/api/scan?address=0xWallet Address"
+
 ## 🔒 Security & Privacy
 
-- **No data storage:** The tool does not store any wallet addresses, scan results, or personal information. All analysis is performed in real‑time using public blockchain data.
+- *No data storage:* The tool does not store any wallet addresses, scan results, or personal information. All analysis is performed in real‑time using public blockchain data.
 
-- **Read‑only access:** We only read data; we never request private keys or transaction signing.
+- *Read‑only access:* We only read data; we never request private keys or transaction signing.
 
-- **Open source:** The code is fully open source and auditable.
+- *Open source:* The code is fully open source and auditable.
 
-- **Environment variables:** Sensitive keys (like WalletConnect Project ID) are stored in .env.local and never committed.
+- *Environment variables:* Sensitive keys (like WalletConnect Project ID) are stored in .env.local and never committed.
 
 ## 🔗 Useful Links
 
@@ -257,9 +257,9 @@ curl "http://localhost:3000/api/scan?address=0xAddress"
 Contributions are welcome! Please follow these steps:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (git checkout -b feature/amazing-feature)
+3. Commit your changes (git commit -m 'Add some amazing feature')
+4. Push to the branch (git push origin feature/amazing-feature)
 5. Open a Pull Request
 
 ## 📄 License
@@ -267,4 +267,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**Built with ❤️ for Rootstock (RSK)**
+*Built with ❤️ for Rootstock (RSK)*
