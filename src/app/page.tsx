@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { WalletInput } from '@/components/WalletInput';
@@ -16,25 +16,19 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
-  const autoScannedRef = useRef<string | null>(null);
-  const initialLoadRef = useRef(true); // Track if this is the first page load
 
   useEffect(() => {
     setMounted(true);
-    // After first render, mark that initial load is complete
-    initialLoadRef.current = false;
   }, []);
 
-  // Auto‑scan when wallet connects, but NOT on initial page load
+  // Clear all data when wallet disconnects
   useEffect(() => {
-    if (mounted && !initialLoadRef.current && isConnected && connectedAddress) {
-      // If we haven't auto‑scanned this address yet, do it now
-      if (autoScannedRef.current !== connectedAddress) {
-        autoScannedRef.current = connectedAddress;
-        handleScan(connectedAddress);
-      }
+    if (!isConnected) {
+      setReport(null);
+      setScanAddress('');
+      setError('');
     }
-  }, [isConnected, connectedAddress, mounted]);
+  }, [isConnected]);
 
   const handleScan = async (address: string) => {
     setScanAddress(address);
@@ -79,7 +73,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Feature Cards */}
+        {/* Feature Cards (always visible) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-6 rounded-lg">
             <Shield className="text-[#FF6600] text-3xl mb-4" />
@@ -104,23 +98,18 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Main Scan Section */}
+        {/* Main Content */}
         <div className="bg-[#1a1a1a] border border-[#2a2a2a] p-8 rounded-lg mb-12">
           <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
             <Search className="text-[#FF6600]" />
             Start Scanning
           </h2>
 
-          {/* Always show the input box at the top */}
-          <div className="mb-6">
-            <WalletInput onScan={handleScan} isLoading={loading} />
-          </div>
-
-          {/* Show connection prompt if not connected (optional) */}
+          {/* Show only Connect Wallet button when not connected */}
           {!isConnected && (
-            <div className="text-center p-4 border-t border-[#2a2a2a] pt-6">
-              <p className="text-[#a0a0a0] mb-4">
-                Or connect your wallet to auto‑scan your address.
+            <div className="text-center py-8">
+              <p className="text-[#a0a0a0] mb-6">
+                Connect your wallet to start scanning your address.
               </p>
               <div className="flex justify-center">
                 <ConnectButton />
@@ -128,26 +117,40 @@ export default function Home() {
             </div>
           )}
 
-          {/* Loading state */}
-          {loading && (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#FF6600]" />
-              <span className="ml-2 text-[#a0a0a0]">Scanning wallet...</span>
-            </div>
-          )}
+          {/* Show input and scan button only when connected */}
+          {isConnected && (
+            <>
+              <div className="mb-6">
+                <WalletInput onScan={handleScan} isLoading={loading} />
+                {connectedAddress && (
+                  <p className="text-sm text-[#a0a0a0] mt-2 text-center">
+                    Connected: {connectedAddress.slice(0, 6)}...{connectedAddress.slice(-4)}
+                  </p>
+                )}
+              </div>
 
-          {/* Error message */}
-          {error && !loading && (
-            <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-center">
-              {error}
-            </div>
-          )}
+              {/* Loading State */}
+              {loading && (
+                <div className="flex justify-center items-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-[#FF6600]" />
+                  <span className="ml-2 text-[#a0a0a0]">Scanning wallet...</span>
+                </div>
+              )}
 
-          {/* Dashboard (results) */}
-          {report && !loading && (
-            <div className="mt-8 pt-8 border-t border-[#2a2a2a]">
-              <Dashboard report={report} />
-            </div>
+              {/* Error Message */}
+              {error && !loading && (
+                <div className="mt-4 p-4 bg-red-500/10 border border-red-500/50 rounded-lg text-red-500 text-center">
+                  {error}
+                </div>
+              )}
+
+              {/* Dashboard (only after successful scan) */}
+              {report && !loading && (
+                <div className="mt-8 pt-8 border-t border-[#2a2a2a]">
+                  <Dashboard report={report} />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
