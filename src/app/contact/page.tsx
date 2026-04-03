@@ -1,109 +1,159 @@
 'use client';
 
-import { FaGithub, FaTwitter, FaDiscord, FaEnvelope } from 'react-icons/fa';
+import { FaGithub, FaDiscord, FaEnvelope, FaTwitter, FaTelegram, FaMedium } from 'react-icons/fa';
 import Link from 'next/link';
 
 export default function ContactPage() {
   return (
-    <main className="flex-1 bg-black">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-4xl font-bold text-white mb-8">Contact & Support</h1>
+    <div className="min-h-screen flex flex-col bg-black">
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto px-6 py-16">
 
-        <div className="space-y-8">
+          {/* Header */}
+          <div className="mb-12">
+            <h1 className="text-4xl font-bold text-white mb-4">
+              Contact & Support
+            </h1>
+            <p className="text-gray-400 text-lg">
+              Have questions, feedback, or need help with RSK Wallet Risk Scan?
+            </p>
+            <div className="mt-4 h-1 w-24 bg-[#FF6600] rounded"></div>
+          </div>
+
           {/* Support Channels */}
-          <section className="bg-[#1a1a1a] border border-[#2a2a2a] p-6 rounded-lg">
-            <h2 className="text-2xl font-bold text-white mb-6">Get Help</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <section className="bg-[#111111] border border-[#2a2a2a] p-8 rounded-xl mb-10">
+            <h2 className="text-2xl font-semibold text-[#FF6600] mb-8">
+              Get Help
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+              {/* GitHub */}
               <Link
-                href="https://github.com/your-repo/rsk-wallet-risk-scan"
+                href="https://github.com/rootstock/rsk-wallet-risk-scan"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#2a2a2a] border border-[#3a3a3a] p-4 rounded-lg hover:border-[#FF6600] transition-all group"
+                className="bg-black border border-[#2a2a2a] p-6 rounded-lg hover:border-[#FF6600] transition group"
               >
-                <FaGithub className="text-[#FF6600] text-2xl mb-3" />
+                <FaGithub className="text-[#FF6600] text-2xl mb-4" />
                 <h3 className="text-white font-semibold mb-2 group-hover:text-[#FF6600] transition-colors">
                   GitHub
                 </h3>
-                <p className="text-[#a0a0a0] text-sm">
-                  Report issues, request features, or contribute to the project
+                <p className="text-gray-400 text-sm">
+                  Report issues, request features, or contribute to the project.
                 </p>
               </Link>
 
+              {/* Discord */}
+              <Link
+                href="https://discord.gg/rootstock"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-black border border-[#2a2a2a] p-6 rounded-lg hover:border-[#FF6600] transition group"
+              >
+                <FaDiscord className="text-[#FF6600] text-2xl mb-4" />
+                <h3 className="text-white font-semibold mb-2 group-hover:text-[#FF6600] transition-colors">
+                  Discord
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Join the Rootstock developer community for support.
+                </p>
+              </Link>
+
+              {/* Twitter */}
               <Link
                 href="https://twitter.com/rootstock_io"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#2a2a2a] border border-[#3a3a3a] p-4 rounded-lg hover:border-[#FF6600] transition-all group"
+                className="bg-black border border-[#2a2a2a] p-6 rounded-lg hover:border-[#FF6600] transition group"
               >
-                <FaTwitter className="text-[#FF6600] text-2xl mb-3" />
+                <FaTwitter className="text-[#FF6600] text-2xl mb-4" />
                 <h3 className="text-white font-semibold mb-2 group-hover:text-[#FF6600] transition-colors">
                   Twitter
                 </h3>
-                <p className="text-[#a0a0a0] text-sm">
-                  Follow for updates, announcements, and community news
+                <p className="text-gray-400 text-sm">
+                  Follow for updates, announcements, and community news.
                 </p>
               </Link>
 
+              {/* Telegram */}
               <Link
-                href="https://discord.gg/rootstock"
+                href="https://t.me/rootstock_announcements"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="bg-[#2a2a2a] border border-[#3a3a3a] p-4 rounded-lg hover:border-[#FF6600] transition-all group"
+                className="bg-black border border-[#2a2a2a] p-6 rounded-lg hover:border-[#FF6600] transition group"
               >
-                <FaDiscord className="text-[#FF6600] text-2xl mb-3" />
+                <FaTelegram className="text-[#FF6600] text-2xl mb-4" />
                 <h3 className="text-white font-semibold mb-2 group-hover:text-[#FF6600] transition-colors">
-                  Discord
+                  Telegram
                 </h3>
-                <p className="text-[#a0a0a0] text-sm">
-                  Join the community for real-time support and discussions
+                <p className="text-gray-400 text-sm">
+                  Join official announcements and community discussions.
                 </p>
               </Link>
 
-              <div className="bg-[#2a2a2a] border border-[#3a3a3a] p-4 rounded-lg">
-                <FaEnvelope className="text-[#FF6600] text-2xl mb-3" />
-                <h3 className="text-white font-semibold mb-2">Email</h3>
-                <p className="text-[#a0a0a0] text-sm">
-                  For inquiries:{' '}
-                  <a
-                    href="mailto:support@rskwalletriskscan.com"
-                    className="text-[#FF6600] hover:underline"
-                  >
-                    support@rskwalletriskscan.com
-                  </a>
+              {/* Medium */}
+              <Link
+                href="https://medium.com/rootstock"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-black border border-[#2a2a2a] p-6 rounded-lg hover:border-[#FF6600] transition group"
+              >
+                <FaMedium className="text-[#FF6600] text-2xl mb-4" />
+                <h3 className="text-white font-semibold mb-2 group-hover:text-[#FF6600] transition-colors">
+                  Medium
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  Read in-depth articles, tutorials, and technical updates.
+                </p>
+              </Link>
+
+              {/* Email */}
+              <div className="bg-black border border-[#2a2a2a] p-6 rounded-lg">
+                <FaEnvelope className="text-[#FF6600] text-2xl mb-4" />
+                <h3 className="text-white font-semibold mb-2">Business Inquiries</h3>
+                <p className="text-gray-400 text-sm">
+                  For partnerships and business opportunities, contact through official Rootstock channels.
                 </p>
               </div>
+
             </div>
           </section>
-
-          {/* Community */}
-          <section className="bg-[#1a1a1a] border border-[#2a2a2a] p-6 rounded-lg">
-            <h2 className="text-2xl font-bold text-white mb-4">Join the Community</h2>
-            <p className="text-[#a0a0a0] mb-4">
-              Rootstock has a vibrant community of developers, users, and enthusiasts. Join us to
-              stay updated on the latest developments, share your projects, and get help when you
-              need it.
+      
+          {/* Community Section */}
+          <section className="bg-[#111111] border border-[#2a2a2a] p-8 rounded-xl">
+            <h2 className="text-2xl font-semibold text-[#FF6600] mb-4">
+              Community Driven
+            </h2>
+            <p className="text-gray-300 mb-6">
+              The RSK Wallet Risk Scan is built to improve security and transparency 
+              within the Rootstock ecosystem. We welcome feedback and contributions 
+              from developers and security experts like you.
             </p>
+
             <div className="flex flex-wrap gap-4">
               <Link
-                href="https://github.com/your-repo/rsk-wallet-risk-scan"
+                href="https://github.com/rootstock/rsk-wallet-risk-scan"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-[#FF6600] text-white rounded-lg hover:bg-[#E55A00] transition-colors"
+                className="px-5 py-2 bg-[#FF6600] text-white rounded-lg hover:bg-[#E55A00] transition"
               >
-                Visit GitHub
+                View on GitHub
               </Link>
+
               <Link
                 href="https://discord.gg/rootstock"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-4 py-2 bg-[#2a2a2a] border border-[#3a3a3a] text-white rounded-lg hover:border-[#FF6600] transition-colors"
+                className="px-5 py-2 bg-black border border-[#2a2a2a] text-white rounded-lg hover:border-[#FF6600] transition"
               >
                 Join Discord
               </Link>
             </div>
           </section>
+
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   );
 }

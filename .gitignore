@@ -27,10 +27,59 @@
 # debug
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
+yarn-error.log*PS D:\RSK\rsk-wallet-risk-scan> npm install --save-dev @testing-library/react @testing-library/jest-dom jest @types/jest
+npm warn ERESOLVE overriding peer dependency
+npm warn While resolving: use-sync-external-store@1.2.0
+npm warn Found: react@19.2.3
+npm warn node_modules/react
+npm warn   peer react@">=16.8.0" from @floating-ui/react-dom@2.1.8
+npm warn   node_modules/@floating-ui/react-dom
+npm warn     @floating-ui/react-dom@"^2.0.0" from @radix-ui/react-popper@1.2.8
+npm warn     node_modules/@radix-ui/react-popper
+npm warn   96 more (@radix-ui/react-accessible-icon, ...)
+npm warn
+npm warn Could not resolve dependency:
+npm warn peer react@"^16.8.0 || ^17.0.0 || ^18.0.0" from use-sync-external-store@1.2.0
+npm warn node_modules/valtio/node_modules/use-sync-external-store
+npm warn   use-sync-external-store@"1.2.0" from valtio@1.13.2
+npm warn   node_modules/valtio
+npm warn
+npm warn Conflicting peer dependency: react@18.3.1
+npm warn node_modules/react
+npm warn   peer react@"^16.8.0 || ^17.0.0 || ^18.0.0" from use-sync-external-store@1.2.0
+npm warn   node_modules/valtio/node_modules/use-sync-external-store
+npm warn     use-sync-external-store@"1.2.0" from valtio@1.13.2
+npm warn     node_modules/valtio
+npm warn deprecated inflight@1.0.6: This module is not supported, and leaks memory. Do not use it. Check out lru-cache if you want a good and tested way to coalesce async requests by a key value, which is much more comprehensive and powerful.
+npm warn deprecated glob@7.2.3: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+npm warn cleanup Failed to remove some directories [
+npm warn cleanup   [
+npm warn cleanup     'D:\\RSK\\rsk-wallet-risk-scan\\node_modules\\@unrs\\resolver-binding-wasm32-wasi',
+npm warn cleanup     [Error: EPERM: operation not permitted, scandir 'D:\RSK\rsk-wallet-risk-scan\node_modules\@unrs\resolver-binding-wasm32-wasi\node_modules\@napi-rs\wasm-runtime\dist'] {       
+npm warn cleanup       errno: -4048,
+npm warn cleanup       code: 'EPERM',
+npm warn cleanup       syscall: 'scandir',
+npm warn cleanup       path: 'D:\\RSK\\rsk-wallet-risk-scan\\node_modules\\@unrs\\resolver-binding-wasm32-wasi\\node_modules\\@napi-rs\\wasm-runtime\\dist'
+npm warn cleanup     }
+npm warn cleanup   ]
+npm warn cleanup ]
+
+added 262 packages, and audited 1282 packages in 2m
+
+235 packages are looking for funding
+  run `npm fund` for details
+
+1 moderate severity vulnerability
+
+To address all issues, run:
+  npm audit fix --force
+
+Run `npm audit` for details.
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
+.env
 .env*
 .env.local
 .env.production

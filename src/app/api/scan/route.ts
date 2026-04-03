@@ -1,11 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { provider } from '@/lib/rpc';
-import { isValidAddress } from '@/utils/addressValidator';
+import { getAddress } from 'ethers';
 import { RiskReport, Approval, ContractInteraction } from '@/types/wallet';
 import { ethers } from 'ethers';
 import { calculateRiskScore } from '@/lib/riskEngine';
+import { normalizeAddress } from '@/utils/addressValidator';
+import { JsonRpcProvider } from 'ethers';
 
-const EXPLORER_API = process.env.NEXT_PUBLIC_EXPLORER_API || 'https://explorer.rsk.co/api';
+function getDefaultExplorerApiBase(): string {
+  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID);
+  if (chainId === 31) return 'https://rootstock-testnet.blockscout.com/api';
+  // Rootstock mainnet chainId is 30
+  return 'https://rootstock.blockscout.com/api';
+}
+
+function normalizeExplorerApiBase(input: string): string {
+  const trimmed = input.trim();
+  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID);
+
+  // If user set the old rsk explorer URL, map it to Blockscout.
+  if (/explorer\.rsk\.co\/api/i.test(trimmed)) {
+    return chainId === 31
+      ? 'https://rootstock-testnet.blockscout.com/api'
+      : 'https://rootstock.blockscout.com/api';
+  }
+
+  // Common misconfig: chainId=31 but mainnet Blockscout base.
+  if (chainId === 31 && /rootstock\.blockscout\.com\/api/i.test(trimmed)) {
+    return 'https://rootstock-testnet.blockscout.com/api';
+  }
+
+  // Common misconfig: chainId=30 but testnet Blockscout base.
+  if (chainId === 30 && /rootstock-testnet\.blockscout\.com\/api/i.test(trimmed)) {
+    return 'https://rootstock.blockscout.com/api';
+  }
+
+  return trimmed;
+}
+
+// Blockscout API supports the Etherscan-style `module=account&action=txlist`.
+const EXPLORER_API = normalizeExplorerApiBase(
+  process.env.NEXT_PUBLIC_EXPLORER_API || getDefaultExplorerApiBase()
+);
 
 // Helper to safely fetch explorer API with timeout
 async function fetchExplorerAPI(url: string) {
@@ -27,18 +63,70 @@ async function fetchExplorerAPI(url: string) {
   }
 }
 
-async function fetchExplorerTransactions(address: string): Promise<any[]> {
-  // Try normal transactions
-  const normalUrl = `${EXPLORER_API}?module=account&action=txlist&address=${address}&sort=desc&offset=100`;
-  const normalData = await fetchExplorerAPI(normalUrl);
-  const normalTxs = normalData?.status === '1' ? normalData.result : [];
+function getExplorerFallbackBases(): string[] {
+  const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID);
+  return chainId === 31
+    ? ['https://rootstock-testnet.blockscout.com/api', 'https://rootstock.blockscout.com/api']
+    : ['https://rootstock.blockscout.com/api', 'https://rootstock-testnet.blockscout.com/api'];
+}
 
-  // Try internal transactions (may not be supported on RSK)
-  const internalUrl = `${EXPLORER_API}?module=account&action=txlistinternal&address=${address}&sort=desc&offset=100`;
-  const internalData = await fetchExplorerAPI(internalUrl);
-  const internalTxs = internalData?.status === '1' ? internalData.result : [];
+async function fetchExplorerAPIWithFallback(url: string) {
+  const first = await fetchExplorerAPI(url);
+  if (first !== null) return first;
 
-  return [...normalTxs, ...internalTxs];
+  // If the configured base is wrong (404/blocked), retry with known bases.
+  const fallbacks = getExplorerFallbackBases();
+  for (const base of fallbacks) {
+    if (url.startsWith(base)) continue;
+    const retryUrl = url.replace(EXPLORER_API, base);
+    const data = await fetchExplorerAPI(retryUrl);
+    if (data !== null) return data;
+  }
+  return null;
+}
+
+type ExplorerTx = { to: string | null };
+
+async function fetchExplorerTransactionsPaged(
+  address: string,
+  opts?: { pageSize?: number; maxPages?: number }
+): Promise<{ transactions: ExplorerTx[]; totalCount: number }> {
+  const addressEncoded = encodeURIComponent(address);
+  const pageSize = Math.max(1, Math.min(opts?.pageSize ?? 200, 1000));
+  const maxPages = Math.max(1, Math.min(opts?.maxPages ?? 10, 50));
+
+  const all: ExplorerTx[] = [];
+
+  for (let page = 1; page <= maxPages; page++) {
+    const apiUrl = `${EXPLORER_API}?module=account&action=txlist&address=${addressEncoded}&sort=desc&page=${page}&offset=${pageSize}`;
+    const data = await fetchExplorerAPIWithFallback(apiUrl);
+
+    // Blockscout-style API: { status: "1"|"0", result: []|string }
+    const pageTxs = data?.status === '1' && Array.isArray(data.result) ? data.result : [];
+    if (pageTxs.length === 0) break;
+
+    for (const tx of pageTxs) {
+      all.push({ to: typeof tx?.to === 'string' ? tx.to : null });
+    }
+
+    // If we got less than a full page, we reached the end.
+    if (pageTxs.length < pageSize) break;
+  }
+
+  return { transactions: all, totalCount: all.length };
+}
+
+async function isVerifiedContractOnExplorer(address: string): Promise<boolean> {
+  const addressEncoded = encodeURIComponent(address);
+  const url = `${EXPLORER_API}?module=contract&action=getsourcecode&address=${addressEncoded}`;
+  const data = await fetchExplorerAPIWithFallback(url);
+
+  // Blockscout getsourcecode returns { status: "1", result: [ { SourceCode, ABI, ... } ] }
+  const first = Array.isArray(data?.result) ? data.result[0] : null;
+  const sourceCode = typeof first?.SourceCode === 'string' ? first.SourceCode : '';
+  const abi = typeof first?.ABI === 'string' ? first.ABI : '';
+
+  return sourceCode.trim().length > 0 || (abi.trim().length > 0 && abi.trim() !== 'Contract source code not verified');
 }
 
 async function isContract(address: string): Promise<boolean> {
@@ -51,25 +139,103 @@ async function isContract(address: string): Promise<boolean> {
   }
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return await Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
+async function fetchContractInteractions(
+  explorerTxs: ExplorerTx[],
+  opts?: { maxTxs?: number; timeoutMs?: number; batchSize?: number }
+): Promise<ContractInteraction[]> {
+  const maxTxs = Math.max(1, Math.min(opts?.maxTxs ?? 200, 2000));
+  const timeoutMs = Math.max(250, Math.min(opts?.timeoutMs ?? 2500, 15000));
+  const batchSize = Math.max(1, Math.min(opts?.batchSize ?? 10, 50));
+
+  // Count interactions by `to` address first (cheap, no RPC).
+  const interactionMap = new Map<string, number>();
+  for (const tx of explorerTxs.slice(0, maxTxs)) {
+    const to = tx.to;
+    if (!to || to === '0x0000000000000000000000000000000000000000000') continue;
+    interactionMap.set(to, (interactionMap.get(to) || 0) + 1);
+  }
+
+  // Dedup and check contract code with concurrency limit + timeout.
+  const uniqueTo = Array.from(interactionMap.keys());
+  const isContractMap = new Map<string, boolean>();
+  const knownMap = new Map<string, boolean>();
+
+  for (let i = 0; i < uniqueTo.length; i += batchSize) {
+    const batch = uniqueTo.slice(i, i + batchSize);
+    const results = await Promise.allSettled(
+      batch.map(async (addr) => {
+        const isC = await withTimeout(isContract(addr), timeoutMs);
+        return { addr, isC };
+      })
+    );
+
+    for (const r of results) {
+      if (r.status === 'fulfilled') isContractMap.set(r.value.addr, r.value.isC);
+      else {
+        // On timeouts/errors, treat as non-contract so scans don't hang.
+        isContractMap.set(batch[results.indexOf(r)], false);
+      }
+    }
+  }
+
+  // Mark "known" if Blockscout has verified source/ABI (best-effort, capped).
+  const contractAddrs = uniqueTo.filter((a) => isContractMap.get(a) === true).slice(0, 25);
+  const verifyResults = await Promise.allSettled(
+    contractAddrs.map(async (addr) => {
+      const isVerified = await withTimeout(isVerifiedContractOnExplorer(addr), 3000);
+      return { addr, isVerified };
+    })
+  );
+  for (const r of verifyResults) {
+    if (r.status === 'fulfilled') knownMap.set(r.value.addr, r.value.isVerified);
+  }
+
+  return Array.from(interactionMap.entries())
+    .filter(([addr]) => isContractMap.get(addr) === true)
+    .map(([address, count]) => ({ address, count, known: knownMap.get(address) === true }));
+}
+
 async function fetchApprovals(address: string): Promise<Approval[]> {
-  try {
+  const chunkSize = Math.max(1000, Number(process.env.APPROVAL_SCAN_CHUNK_SIZE) || 5000);
+  const latestBlock = await provider.getBlockNumber();
+  const fromBlock = Math.max(latestBlock - chunkSize, 0);
+
+  const tryGetLogs = async (p: JsonRpcProvider) => {
     const approvalTopic = ethers.id('Approval(address,address,uint256)');
     const paddedAddress = ethers.zeroPadValue(address, 32);
-    const latestBlock = await provider.getBlockNumber();
-    const fromBlock = Math.max(latestBlock - 5000, 0); // ensure non-negative
-
-    const logs = await provider.getLogs({
+    return await p.getLogs({
       fromBlock,
       toBlock: 'latest',
       topics: [approvalTopic, paddedAddress],
     });
+  };
+
+  try {
+    const logs = await tryGetLogs(provider);
 
     const approvals: Approval[] = [];
 
     for (const log of logs) {
+      // ERC721 Approval has an indexed tokenId => topics length is 4 and data is usually 0x.
+      if (log.topics.length !== 3) continue;
+
       const token = log.address;
       const spender = ethers.getAddress('0x' + log.topics[2].slice(26)); // last 20 bytes
-      const value = ethers.toBigInt(log.data);
+      let value: bigint;
+      try {
+        if (!log.data || log.data === '0x') continue;
+        value = ethers.toBigInt(log.data);
+      } catch (e) {
+        console.error('Failed to parse approval log data:', e);
+        continue;
+      }
 
       let allowanceStr: string;
       let riskFlag: 'unlimited' | 'high' | 'low';
@@ -98,7 +264,59 @@ async function fetchApprovals(address: string): Promise<Approval[]> {
     return approvals;
   } catch (error) {
     console.error('Error fetching approvals:', error);
-    return []; // return empty on error
+
+    // Fallback: some public RPCs intermittently fail or disable eth_getLogs.
+    const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID);
+    const fallbacks =
+      chainId === 31
+        ? ['https://rootstock-testnet.drpc.org', 'https://public-node.testnet.rsk.co']
+        : ['https://public-node.rsk.co'];
+
+    for (const url of fallbacks) {
+      try {
+        // Skip if it's the same URL already in use.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const currentUrl = (provider as any)?._getConnection?.()?.url;
+        if (typeof currentUrl === 'string' && currentUrl === url) continue;
+
+        const p = new ethers.JsonRpcProvider(url);
+        const logs = await tryGetLogs(p);
+
+        const approvals: Approval[] = [];
+        for (const log of logs) {
+          if (log.topics.length !== 3) continue;
+
+          const token = log.address;
+          const spender = ethers.getAddress('0x' + log.topics[2].slice(26));
+          if (!log.data || log.data === '0x') continue;
+          let value: bigint;
+          try {
+            value = ethers.toBigInt(log.data);
+          } catch {
+            continue;
+          }
+
+          let allowanceStr: string;
+          let riskFlag: 'unlimited' | 'high' | 'low';
+
+          if (value === ethers.MaxUint256) {
+            allowanceStr = 'Unlimited';
+            riskFlag = 'unlimited';
+          } else {
+            allowanceStr = value.toString();
+            riskFlag = value > ethers.parseEther('1000000') ? 'high' : 'low';
+          }
+
+          approvals.push({ token, spender, allowance: allowanceStr, riskFlag });
+        }
+
+        return approvals;
+      } catch {
+        // try next fallback
+      }
+    }
+
+    return [];
   }
 }
 
@@ -106,45 +324,41 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const address = searchParams.get('address');
 
-  if (!address || !isValidAddress(address)) {
+  if (!address) {
     return NextResponse.json({ error: 'Invalid address' }, { status: 400 });
   }
 
   try {
-    const normalizedAddress = ethers.getAddress(address);
+    const normalizedAddress = normalizeAddress(address);
+    if (!normalizedAddress) {
+      return NextResponse.json({ error: 'Invalid RSK address format' }, { status: 400 });
+    }
 
     // Fetch data in parallel with individual error handling
     const [txCount, approvals, explorerTxs] = await Promise.allSettled([
-      provider.getTransactionCount(normalizedAddress),
+      provider.getTransactionCount(normalizedAddress), // outgoing nonce only (fallback)
       fetchApprovals(normalizedAddress),
-      fetchExplorerTransactions(normalizedAddress),
+      fetchExplorerTransactionsPaged(normalizedAddress),
     ]);
 
     // Handle results with defaults
-    const finalTxCount = txCount.status === 'fulfilled' ? txCount.value : 0;
+    const nonceTxCount = txCount.status === 'fulfilled' ? txCount.value : 0;
     const finalApprovals = approvals.status === 'fulfilled' ? approvals.value : [];
-    const finalExplorerTxs = explorerTxs.status === 'fulfilled' ? explorerTxs.value : [];
+    const explorerResult =
+      explorerTxs.status === 'fulfilled'
+        ? explorerTxs.value
+        : { transactions: [] as ExplorerTx[], totalCount: 0 };
+    const finalExplorerTxs = explorerResult.transactions;
+    const explorerTxCount = explorerResult.totalCount;
 
-    // Build contract interactions map
-    const interactionMap = new Map<string, number>();
+    // Prefer explorer tx count (incoming+outgoing). Fallback to nonce when explorer fails/returns 0.
+    const finalTxCount = explorerTxCount > 0 ? explorerTxCount : nonceTxCount;
 
-    for (const tx of finalExplorerTxs) {
-      const to = tx.to;
-      if (to && to !== '0x0000000000000000000000000000000000000000') {
-        const isContractAddr = await isContract(to);
-        if (isContractAddr) {
-          interactionMap.set(to, (interactionMap.get(to) || 0) + 1);
-        }
-      }
-    }
-
-    const contractInteractions: ContractInteraction[] = Array.from(interactionMap.entries()).map(
-      ([address, count]) => ({
-        address,
-        count,
-        known: false, // we could check verification later
-      })
-    );
+    const contractInteractions = await fetchContractInteractions(finalExplorerTxs, {
+      maxTxs: 200,
+      timeoutMs: 2500,
+      batchSize: 10,
+    });
 
     // Calculate risk score
     const { score, reasons, riskLevel } = calculateRiskScore(
@@ -166,7 +380,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Unhandled scan error:', error);
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Internal server error' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

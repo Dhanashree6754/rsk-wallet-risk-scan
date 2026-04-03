@@ -42,7 +42,13 @@ export const rootstockTestnet = defineChain({
 
 export const config = getDefaultConfig({
   appName: 'RSK Wallet Risk Scan',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID!,
+  projectId: (() => {
+    const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID;
+    if (!projectId) {
+      throw new Error('Missing NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID');
+    }
+    return projectId;
+  })(),
   chains: [rootstock, rootstockTestnet],
   transports: {
     [rootstock.id]: http(),

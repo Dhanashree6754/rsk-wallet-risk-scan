@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { isValidAddress } from '@/utils/addressValidator';
-import { Button } from './ui/button'; // we'll create this shadcn component
+import { Button } from './ui/button';
 import { Input } from './ui/input';
+import { normalizeAddress } from '@/utils/addressValidator';
 
 interface WalletInputProps {
   onScan: (address: string) => void;
@@ -15,16 +15,19 @@ export function WalletInput({ onScan, isLoading }: WalletInputProps) {
   const [error, setError] = useState('');
 
   const handleScan = () => {
-    if (!address) {
+    if (!address.trim()) {
       setError('Please enter an address');
       return;
     }
-    if (!isValidAddress(address)) {
-      setError('Invalid Ethereum address');
+
+    const normalized = normalizeAddress(address);
+    if (!normalized) {
+      setError('Invalid RSK address format');
       return;
     }
+
     setError('');
-    onScan(address);
+    onScan(normalized);
   };
 
   return (
@@ -35,8 +38,13 @@ export function WalletInput({ onScan, isLoading }: WalletInputProps) {
           value={address}
           onChange={(e) => setAddress(e.target.value)}
           disabled={isLoading}
+          className="text-white placeholder:text-gray-400"
         />
-        <Button onClick={handleScan} disabled={isLoading}>
+        <Button
+          onClick={handleScan}
+          disabled={isLoading}
+          className="bg-[#FF6600] hover:bg-[#FF6600]/80 text-white font-medium"
+        >
           {isLoading ? 'Scanning...' : 'Scan Wallet'}
         </Button>
       </div>
