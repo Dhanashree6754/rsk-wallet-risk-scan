@@ -24,8 +24,8 @@ describe('riskEngine', () => {
     expect(riskLevel).toBe('HIGH');
   });
 
-  it('adds points for unknown contract interactions', () => {
-    const { score, riskLevel } = calculateRiskScore(
+  it('does not add risk points for unverified contracts (informational only)', () => {
+    const { score, riskLevel, reasons } = calculateRiskScore(
       0,
       [],
       [
@@ -33,11 +33,12 @@ describe('riskEngine', () => {
       ]
     );
 
-    // totalInteractions = 11 => +20 for frequency, +11*5 for unknown contracts? (unknown contracts counts contracts, not interactions)
-    // Current engine counts unknown contracts by number of contracts, not total interactions count.
-    // unknownInteractions = 1 => +5, so score = 20 + 5 = 25 => MEDIUM
-    expect(score).toBe(25);
-    expect(riskLevel).toBe('LOW' /* 25 should still be LOW (0-30) */);
+    // totalInteractions = 11 => +20 for frequency; unverified contracts do not affect score.
+    expect(score).toBe(20);
+    expect(riskLevel).toBe('LOW');
+    expect(reasons.join(' | ')).toMatch(
+      /11 interaction\(s\) with unverified contracts \(informational\)/i
+    );
   });
 });
 

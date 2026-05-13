@@ -29,11 +29,14 @@ export function calculateRiskScore(
     reasons.push(`More than 10 contract interactions (${totalInteractions})`);
   }
 
-  // Unknown contract interactions
-  const unknownInteractions = contractInteractions.filter(c => !c.known).length;
-  if (unknownInteractions > 0) {
-    score += unknownInteractions * 5;
-    reasons.push(`${unknownInteractions} unknown contract(s)`);
+  // Unverified contracts are informational only; do not increase risk score.
+  const unverifiedInteractionCount = contractInteractions
+    .filter((c) => !c.known)
+    .reduce((acc, cur) => acc + cur.count, 0);
+  if (unverifiedInteractionCount > 0) {
+    reasons.push(
+      `${unverifiedInteractionCount} interactions with unverified contracts (informational)`
+    );
   }
 
   // Transaction count > 50

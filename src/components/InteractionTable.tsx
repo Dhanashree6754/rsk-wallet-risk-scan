@@ -28,7 +28,7 @@ export function InteractionTable({ interactions }: Props) {
               <TableCell className="text-[#a0a0a0]">{interaction.count}</TableCell>
               <TableCell>
                 <Badge variant={interaction.known ? 'default' : 'secondary'} className="border-0">
-                  {interaction.known ? 'Known' : 'Unknown'}
+                  {interaction.known ? 'Verified' : 'Unverified'}
                 </Badge>
               </TableCell>
             </TableRow>
